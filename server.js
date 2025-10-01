@@ -16,7 +16,10 @@ const PORT = process.env.PORT || 8800;
 connectDB();
 
 // cors config
-const allowedOrigins = ["http://localhost:3000"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://idea-drop-pink.vercel.app/",
+];
 
 //starting middleware
 app.use(cors({ origin: allowedOrigins, credentials: true }));
