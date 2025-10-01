@@ -130,6 +130,17 @@ router.put("/:id", protect, async (req, res, next) => {
       return res.status(400).json({ message: "Invalid id" });
     }
 
+    const idea = await Idea.findById(id);
+    if (!idea) {
+      res.status(404);
+      throw new Error("Idea not found");
+    }
+    //Check if user is the owner of the idea
+    if (idea.user.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error("User not authorized to update this idea");
+    }
+
     const { title, summary, description, tags } = req.body || {};
 
     if (!title?.trim() || !summary?.trim() || !description?.trim()) {
@@ -137,22 +148,20 @@ router.put("/:id", protect, async (req, res, next) => {
       throw new Error("Title, summary and description are all required values");
     }
 
-    const updatedIdea = await Idea.findByIdAndUpdate(
-      id,
-      {
-        title,
-        summary,
-        description,
-        tags: Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()),
-      },
-      { new: true, runValidators: true }
-    );
+    idea.title = title;
+    idea.summary = summary;
+    idea.description = description;
+    idea.tags = Array.isArray(tags)
+      ? tags
+      : typeof tags === "string"
+      ? tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
+    idea.name = req.user.name;
 
-    if (!updatedIdea) {
-      res.status(404);
-      throw new Error("Idea not found");
-    }
-
+    const updatedIdea = await idea.save();
     res.json(updatedIdea);
   } catch (err) {
     console.log(err);

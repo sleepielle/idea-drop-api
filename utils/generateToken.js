@@ -1,5 +1,5 @@
 import { SignJWT } from "jose";
-import { JWT_SECRET } from "./getJWTSecret";
+import { JWT_SECRET } from "./getJWTSecret.js";
 
 export const generateToken = async (payload, expiresIn = "15m") => {
   return await new SignJWT(payload)
