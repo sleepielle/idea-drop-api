@@ -1,7 +1,8 @@
 import express from "express";
-const router = express.Router();
 import Idea from "../models/Idea.js";
 import mongoose from "mongoose";
+const router = express.Router();
+import { protect } from "../middleware/auth.js";
 
 // @route           GET /api/ideas
 // @description     Get all ideas
@@ -49,11 +50,11 @@ router.get("/:id", async (req, res, next) => {
 });
 
 // @route           POST /api/ideas
-// @description     POST all ideas
+// @description     Create new idea
 // @access          Public
-router.post("/", async (req, res, next) => {
+router.post("/", protect, async (req, res, next) => {
   try {
-    const { title, summary, description, tags } = req.body;
+    const { title, summary, description, tags } = req.body || {};
 
     if (!title?.trim() || !summary?.trim() || !description?.trim()) {
       res.status(400);
@@ -74,6 +75,7 @@ router.post("/", async (req, res, next) => {
           : Array.isArray(tags)
           ? tags
           : [],
+      user: req.user._id,
     });
 
     //201: success. created something.
@@ -88,21 +90,27 @@ router.post("/", async (req, res, next) => {
 // @route           DELETE /api/ideas/:id
 // @description     Delete idea by id
 // @access          Public
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", protect, async (req, res, next) => {
   const { id } = req.params;
 
-  //Custom message if id is not found
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid id" });
     }
 
-    const idea = await Idea.findByIdAndDelete(id);
+    const idea = await Idea.findById(id);
 
     if (!idea) {
       res.status(404);
       throw new Error("Idea Not Found");
     }
+    //Check if user is the owner of the idea
+    if (idea.user.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error("User not authorized to delete this idea");
+    }
+
+    await idea.deleteOne();
     res.json({ message: "Idea deleted successfully" });
   } catch (err) {
     console.log(err);
@@ -114,7 +122,7 @@ router.delete("/:id", async (req, res, next) => {
 // @description     Update idea by id
 // @access          Public
 
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", protect, async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -122,7 +130,7 @@ router.put("/:id", async (req, res, next) => {
       return res.status(400).json({ message: "Invalid id" });
     }
 
-    const { title, summary, description, tags } = req.body;
+    const { title, summary, description, tags } = req.body || {};
 
     if (!title?.trim() || !summary?.trim() || !description?.trim()) {
       res.status(400);
