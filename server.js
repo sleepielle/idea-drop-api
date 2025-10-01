@@ -18,7 +18,7 @@ connectDB();
 // cors config
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://idea-drop-pink.vercel.app/",
+  "https://idea-drop-pink.vercel.app",
 ];
 
 //starting middleware
