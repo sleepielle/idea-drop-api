@@ -15,8 +15,11 @@ const PORT = process.env.PORT || 8800;
 // Connect to MongoDb
 connectDB();
 
+// cors config
+const allowedOrigins = ["http://localhost:3000"];
+
 //starting middleware
-app.use(cors());
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 //get raw json in body
 app.use(express.json());
 
